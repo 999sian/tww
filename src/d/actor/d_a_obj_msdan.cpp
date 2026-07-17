@@ -62,7 +62,7 @@ BOOL daObjMsdan::Act_c::Mthd_Execute() {
             } else if (prm_get_size() != 0) {
                 mState = 3;
             } else if (mEventIdx == -1) {
-                mDoAud_seStart(0x806);
+                mDoAud_seStart(JA_SE_READ_RIDDLE_1);
                 mState = 3;
             } else {
                 fopAcM_orderOtherEventId(this, mEventIdx);
@@ -73,7 +73,7 @@ BOOL daObjMsdan::Act_c::Mthd_Execute() {
     case 1:
         if (eventInfo.checkCommandDemoAccrpt()) {
             mState = 2;
-            mDoAud_seStart(0x806);
+            mDoAud_seStart(JA_SE_READ_RIDDLE_1);
         } else {
             fopAcM_orderOtherEventId(this, mEventIdx);
         }
