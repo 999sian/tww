@@ -6,8 +6,6 @@
 #include "d/dolzel_rel.h" // IWYU pragma: keep
 #include "d/actor/d_a_tag_ba1.h"
 #include "d/d_com_inf_game.h"
-#include "d/d_item_data.h"
-#include "m_Do/m_Do_hostIO.h"
 
 class daTag_Ba1_HIO_c : public JORReflexible {
 public:
@@ -28,10 +26,6 @@ public:
 
 static daTag_Ba1_HIO_c l_HIO;
 
-static char* l_evn_tbl[] = {
-    "Use_Fairy",
-};
-
 /* 000000EC-00000144       .text __ct__15daTag_Ba1_HIO_cFv */
 daTag_Ba1_HIO_c::daTag_Ba1_HIO_c() {
     static hio_prm_c a_prm_tbl = {
@@ -41,6 +35,10 @@ daTag_Ba1_HIO_c::daTag_Ba1_HIO_c() {
     mNo = -1;
     mCounter = -1;
 }
+
+static char* l_evn_tbl[] = {
+    "Use_Fairy",
+};
 
 /* 00000144-00000164       .text daTag_Ba1_XyCheck_cB__FPvi */
 static s16 daTag_Ba1_XyCheck_cB(void* i_this, int i_itemBtn) {
@@ -70,8 +68,8 @@ bool daTag_Ba1_c::createInit() {
         return bit;
     }
 
-    bool not_set = !dComIfGs_isEventBit(0x2A20);
-    if (!not_set) {
+    bool not_set = dComIfGs_isEventBit(0x2A20) == 0;
+    if (not_set) {
         attention_info.flags = 8;
         attention_info.distances[3] = 0x1A;
         mEventIdx[0] = dComIfGp_evmng_getEventIdx(l_evn_tbl[0], 0xFF);
