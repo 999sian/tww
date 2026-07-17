@@ -8,15 +8,20 @@ namespace daObjMsdan {
     class Act_c : public fopAc_ac_c {
     public:
         enum Prm_e {
-            PRM_SOUND_W = 1,
-            PRM_SOUND_S = 0x10,
+            PRM_EVID_W = 8,
+            PRM_EVID_S = 0x18,
 
             PRM_SIZE_W = 1,
             PRM_SIZE_S = 0x12,
 
+            PRM_SOUND_W = 1,
+            PRM_SOUND_S = 0x10,
+
             PRM_SWSAVE_W = 8,
             PRM_SWSAVE_S = 0,
         };
+
+        u8 prm_get_evId() const { return daObj::PrmAbstract(this, PRM_EVID_W, PRM_EVID_S); }
 
         u8 prm_get_size() const { return daObj::PrmAbstract(this, PRM_SIZE_W, PRM_SIZE_S); }
         s32 prm_get_sound() const { return daObj::PrmAbstract(this, PRM_SOUND_W, PRM_SOUND_S); }
@@ -25,7 +30,6 @@ namespace daObjMsdan {
         cPhs_State Mthd_Create();
         BOOL Mthd_Execute();
         BOOL Mthd_Delete();
-
         static const char M_arcname[];
 
     public:
