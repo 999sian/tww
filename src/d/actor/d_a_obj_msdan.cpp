@@ -5,20 +5,60 @@
 
 #include "d/dolzel_rel.h" // IWYU pragma: keep
 #include "d/actor/d_a_obj_msdan.h"
+#include "d/d_com_inf_game.h"
+#include "m_Do/m_Do_audio.h"
+
+const char daObjMsdan::Act_c::M_arcname[] = "Msdan";
 
 /* 00000078-000003D4       .text Mthd_Create__Q210daObjMsdan5Act_cFv */
 cPhs_State daObjMsdan::Act_c::Mthd_Create() {
     /* Nonmatching */
+    return cPhs_COMPLEATE_e;
 }
 
 /* 000003D4-000005C0       .text Mthd_Execute__Q210daObjMsdan5Act_cFv */
 BOOL daObjMsdan::Act_c::Mthd_Execute() {
-    /* Nonmatching */
+    switch (mState) {
+    case 0:
+        if (fopAcM_isSwitch(this, prm_get_swSave())) {
+            if (prm_get_sound() != 0) {
+                mState = 3;
+            } else if (prm_get_size() != 0) {
+                mState = 3;
+            } else if (mEventIdx == -1) {
+                mDoAud_seStart(0x806);
+                mState = 3;
+            } else {
+                fopAcM_orderOtherEventId(this, mEventIdx);
+                mState = 1;
+            }
+        }
+        break;
+    case 1:
+        if (eventInfo.checkCommandDemoAccrpt()) {
+            mState = 2;
+            mDoAud_seStart(0x806);
+        } else {
+            fopAcM_orderOtherEventId(this, mEventIdx);
+        }
+        break;
+    case 2:
+        if (dComIfGp_evmng_endCheck(mEventIdx)) {
+            dComIfGp_event_onEventFlag(8);
+            mState = 3;
+        }
+        break;
+    case 3:
+        break;
+    }
+
+    return TRUE;
 }
 
 /* 000005C0-000005F0       .text Mthd_Delete__Q210daObjMsdan5Act_cFv */
 BOOL daObjMsdan::Act_c::Mthd_Delete() {
-    /* Nonmatching */
+    dComIfG_resDelete(&mPhs, M_arcname);
+    return TRUE;
 }
 
 namespace daObjMsdan {

@@ -2,21 +2,37 @@
 #define D_A_OBJ_MSDAN_H
 
 #include "f_op/f_op_actor.h"
+#include "d/d_a_obj.h"
 
 namespace daObjMsdan {
     class Act_c : public fopAc_ac_c {
     public:
-        void prm_get_evId() const {}
-        void prm_get_size() const {}
-        void prm_get_sound() const {}
-        void prm_get_swSave() const {}
-    
+        enum Prm_e {
+            PRM_SOUND_W = 1,
+            PRM_SOUND_S = 0x10,
+
+            PRM_SIZE_W = 1,
+            PRM_SIZE_S = 0x12,
+
+            PRM_SWSAVE_W = 8,
+            PRM_SWSAVE_S = 0,
+        };
+
+        u8 prm_get_size() const { return daObj::PrmAbstract(this, PRM_SIZE_W, PRM_SIZE_S); }
+        s32 prm_get_sound() const { return daObj::PrmAbstract(this, PRM_SOUND_W, PRM_SOUND_S); }
+        s32 prm_get_swSave() const { return daObj::PrmAbstract(this, PRM_SWSAVE_W, PRM_SWSAVE_S); }
+
         cPhs_State Mthd_Create();
         BOOL Mthd_Execute();
         BOOL Mthd_Delete();
-    
+
+        static const char M_arcname[];
+
     public:
-        /* Place member variables here */
+        /* 0x290 */ request_of_phase_process_class mPhs;
+        /* 0x298 */ s16 mEventIdx;
+        /* 0x29A */ u8 field_0x29A[0x2];
+        /* 0x29C */ int mState;
     };
 };
 
