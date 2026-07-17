@@ -31,6 +31,7 @@ namespace daObjMsdan {
         BOOL Mthd_Execute();
         BOOL Mthd_Delete();
         static const char M_arcname[];
+        static const char M_evname[];
 
     public:
         /* 0x290 */ request_of_phase_process_class mPhs;

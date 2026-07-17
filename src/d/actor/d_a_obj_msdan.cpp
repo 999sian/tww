@@ -9,6 +9,7 @@
 #include "m_Do/m_Do_audio.h"
 
 const char daObjMsdan::Act_c::M_arcname[] = "Msdan";
+const char daObjMsdan::Act_c::M_evname[] = "Msdan";
 
 /* 00000078-000003D4       .text Mthd_Create__Q210daObjMsdan5Act_cFv */
 cPhs_State daObjMsdan::Act_c::Mthd_Create() {
@@ -25,16 +26,14 @@ cPhs_State daObjMsdan::Act_c::Mthd_Create() {
             for (int i = 0; i < 0x1f; i++) {
                 pos.x += 50.0f * cM_ssin(current.angle.y);
                 pos.z += 50.0f * cM_scos(current.angle.y);
-                int base = prm_get_swSave() + (prm_get_sound() << 16);
-                fopAcM_create(fpcNm_Obj_MsdanSub_e, i * 0x100 + base, &pos, current.roomNo, &angle);
+                fopAcM_create(fpcNm_Obj_MsdanSub_e, i * 0x100 + prm_get_swSave() + (prm_get_sound() << 16), &pos, current.roomNo, &angle);
             }
         } else {
             pos.y += 400.0f;
             for (int i = 0x10; i < 0x1f; i++) {
                 pos.x += 50.0f * cM_ssin(current.angle.y);
                 pos.z += 50.0f * cM_scos(current.angle.y);
-                int base = prm_get_swSave() + (prm_get_sound() << 16);
-                fopAcM_create(fpcNm_Obj_MsdanSub_e, i * 0x100 + base, &pos, current.roomNo, &angle);
+                fopAcM_create(fpcNm_Obj_MsdanSub_e, i * 0x100 + prm_get_swSave() + (prm_get_sound() << 16), &pos, current.roomNo, &angle);
             }
         }
         if (prm_get_evId() == 0xff) {
