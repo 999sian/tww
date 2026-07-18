@@ -55,7 +55,7 @@ def disasm(obj):
         r = subprocess.run([DTK, "elf", "disasm", obj, out],
                            capture_output=True, text=True)
         if r.returncode:
-            die(f"dtk failed on {obj}:\n{r.stderr.strip() or r.stdout.strip()}")
+            die(f"dtk failed on {obj}. Ensure it is built ('ninja dtk') and object file is valid.\nError:\n{r.stderr.strip() or r.stdout.strip()}")
         fns, cur, buf = {}, None, []
         with open(out) as f:
             for line in f:
@@ -73,7 +73,7 @@ def disasm(obj):
             fns[cur] = buf
         return fns
     except FileNotFoundError:
-        die(f"dtk not found at '{DTK}' (set $DTK or run from repo root)")
+        die(f"dtk not found at '{DTK}'.\nEnsure it is built ('ninja dtk') or set $DTK to the path.")
     finally:
         os.unlink(out)
 
@@ -182,6 +182,13 @@ def cmd_try(args):
     if best:
         print(f"\nbest: {best[0]} ({'EXACT' if best[1] == 0 else f'{best[1]} diff lines'})")
     return 0 if best and best[1] == 0 else 1
+    if args.show_best and best and best[1] > 0:
+        print(f"\n--- Showing best variant: {best[0]} ---")
+        # Need to construct a mock args object for cmd_show
+        from argparse import Namespace
+        show_args = Namespace(target=args.target, mine=args.obj, fn=args.fn)
+        cmd_show(show_args)
+    return 0 if best and best[1] == 0 else 1
 
 
 def main():
@@ -202,6 +209,8 @@ def main():
     t.add_argument("fn"), t.add_argument("variants")
     t.add_argument("--no-stop", dest="stop_on_exact", action="store_false",
                    help="keep testing variants after an EXACT match")
+    t.add_argument("--show-best", action="store_true",
+                   help="run 'show' on the best variant if not EXACT")
     t.set_defaults(run=cmd_try)
 
     args = p.parse_args()

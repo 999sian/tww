@@ -12,6 +12,10 @@ class TestMwDiff(unittest.TestCase):
             "lis r7, ...rodata.0@h",
             "  addi r8, r8, 1  ", # whitespace
             ".section" # should be dropped
+            ".section",
+            "li r9, @0",
+            "li r10, $0",
+            "lis r11, ...data.0@h"
         ]
         # Expected:
         # li r3, 0
@@ -26,7 +30,10 @@ class TestMwDiff(unittest.TestCase):
             "li r5, @N",
             "li r6, $N",
             "lis r7, @N@h",
-            "addi r8, r8, 1"
+            "addi r8, r8, 1",
+            "li r9, @N",
+            "li r10, $N",
+            "lis r11, @N@h"
         ]
         self.assertEqual(norm(lines), expected)
 
