@@ -72,7 +72,11 @@ bool daTag_Ba1_c::createInit() {
     if (not_set) {
         attention_info.flags = 8;
         attention_info.distances[3] = 0x1A;
+#if VERSION == VERSION_DEMO
+        mEventIdx[0] = dComIfGp_getPEvtManager()->getEventIdx(l_evn_tbl[0], 0xFF);
+#else
         mEventIdx[0] = dComIfGp_evmng_getEventIdx(l_evn_tbl[0], 0xFF);
+#endif
         eventInfo.setXyCheckCB(daTag_Ba1_XyCheck_cB);
         eventInfo.setXyEventCB(daTag_Ba1_XyEvent_cB);
     }
@@ -87,7 +91,7 @@ BOOL daTag_Ba1_c::_draw() {
 /* 00000290-00000340       .text _execute__11daTag_Ba1_cFv */
 BOOL daTag_Ba1_c::_execute() {
     int staffId = -1;
-    if (dComIfGp_event_runCheck() && !eventInfo.checkCommandTalk()) {
+    if (dComIfGp_event_runCheck() && eventInfo.checkCommandTalk() == 0) {
         staffId = dComIfGp_evmng_getMyStaffId("TagBa1", NULL, 0);
     }
     if (staffId >= 0) {
