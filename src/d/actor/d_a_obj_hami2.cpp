@@ -14,9 +14,7 @@
 
 const char daObjHami2::Act_c::M_arcname[] = "Hami2";
 
-#if VERSION > VERSION_DEMO
 const char daObjHami2::Act_c::M_evname[] = "ami_cam";
-#endif
 Mtx daObjHami2::Act_c::M_tmp_mtx;
 
 /* 00000078-0000012C       .text nodeCallBack__FP7J3DNodei */
@@ -39,7 +37,7 @@ static BOOL nodeCallBack(J3DNode *node, int calcTiming) {
 /* 0000012C-0000032C       .text CreateHeap__Q210daObjHami25Act_cFv */
 BOOL daObjHami2::Act_c::CreateHeap() {
     J3DModelData *modelData = (J3DModelData *)dComIfG_getObjectRes(M_arcname, dRes_INDEX_HAMI2_BDL_HAMI2_e);
-    JUT_ASSERT(104, modelData != 0);
+    JUT_ASSERT(DEMO_SELECT(103, 104), modelData != 0);
 
     field_0x2D4 = mDoExt_J3DModel__create(modelData, 0, 0x11020203);
     if (field_0x2D4 != NULL) {
@@ -99,7 +97,7 @@ cPhs_State daObjHami2::Act_c::Mthd_Create() {
     if (phase_state == cPhs_COMPLEATE_e) {
         phase_state = MoveBGCreate(M_arcname, dRes_INDEX_HAMI2_DZB_HAMI2B_e, dBgS_MoveBGProc_TypicalRotY, 0x34E0);
         dComIfG_Bgsp()->Regist(field_0x2D8, this);
-        JUT_ASSERT(200, (phase_state == cPhs_COMPLEATE_e) || (phase_state == cPhs_ERROR_e));
+        JUT_ASSERT(DEMO_SELECT(199, 200), (phase_state == cPhs_COMPLEATE_e) || (phase_state == cPhs_ERROR_e));
     }
     return phase_state;
 }
@@ -109,11 +107,14 @@ BOOL daObjHami2::Act_c::Delete() { return TRUE; }
 
 /* 00000548-000005E8       .text Mthd_Delete__Q210daObjHami25Act_cFv */
 BOOL daObjHami2::Act_c::Mthd_Delete() {
-    if (heap != NULL && field_0x2D8 != NULL && field_0x2D8->ChkUsed()) {
+#if VERSION > VERSION_DEMO
+    if (heap != NULL && field_0x2D8 != NULL && field_0x2D8->ChkUsed())
+#endif
+    {
         dComIfG_Bgsp()->Release(field_0x2D8);
     }
     u32 result = MoveBGDelete();
-    dComIfG_resDelete(&field_0x2CC, M_arcname);
+    dComIfG_resDeleteDemo(&field_0x2CC, M_arcname);
     return result;
 }
 
@@ -157,7 +158,9 @@ void daObjHami2::Act_c::daObjHami2_open_demo() {
     if (field_0x2C8 >= 0x4000) {
         field_0x2C8 = 0x4000;
         field_0x30C = 3;
+#if VERSION > VERSION_DEMO
         dComIfGp_getVibration().StartShock(4, -0x21, cXyz(0.0f, 1.0f, 0.0f));
+#endif
         dComIfGp_event_onEventFlag(8);
     }
 }
@@ -184,7 +187,9 @@ void daObjHami2::Act_c::daObjHami2_close_demo() {
     field_0x2C8 -= 0x100;
     if (field_0x2C8 <= 0) {
         field_0x2C8 = 0;
+#if VERSION > VERSION_DEMO
         dComIfGp_getVibration().StartShock(4, -0x21, cXyz(0.0f, 1.0f, 0.0f));
+#endif
         dComIfGp_event_onEventFlag(8);
         field_0x30C = 0;
     }

@@ -38,9 +38,7 @@ namespace daObjHami2 {
 
         static Mtx M_tmp_mtx;
         static const char M_arcname[];
-#if VERSION > VERSION_DEMO
         static const char M_evname[];
-#endif
 
     public:
         /* 0x2C8 */ s16 field_0x2C8;
