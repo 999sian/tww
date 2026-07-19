@@ -7,6 +7,17 @@
 #include "d/actor/d_a_swpropeller.h"
 #include "m_Do/m_Do_ext.h"
 #include "d/d_cc_d.h"
+#include "d/d_com_inf_game.h"
+#include "d/d_a_obj.h"
+#include "res/Object/Hpbot1.h"
+#include "res/Object/Vpbot_00.h"
+
+const char* daSwProp_c::m_arcname[2] = {"Hpbot1", "Vpbot_00"};
+const s16 daSwProp_c::m_bdlidx[2] = {
+    dRes_INDEX_HPBOT1_BDL_HPBOT1_e,
+    dRes_INDEX_VPBOT_00_BDL_VPBOT_00_e,
+};
+const u32 daSwProp_c::m_heapsize[2] = {0x880, 0x8C0};
 
 static dCcD_SrcCyl l_cyl_src = {
     // dCcD_SrcGObjInf
@@ -38,50 +49,210 @@ static dCcD_SrcCyl l_cyl_src = {
     }},
 };
 
-
 /* 00000078-000000B8       .text _delete__10daSwProp_cFv */
 bool daSwProp_c::_delete() {
-    /* Nonmatching */
+    dComIfG_resDeleteDemo(&mPhase, m_arcname[mType]);
+    return true;
 }
 
 /* 000000B8-000000D8       .text CheckCreateHeap__FP10fopAc_ac_c */
-static BOOL CheckCreateHeap(fopAc_ac_c*) {
-    /* Nonmatching */
+static BOOL CheckCreateHeap(fopAc_ac_c* i_this) {
+    return ((daSwProp_c*)i_this)->CreateHeap();
 }
 
 /* 000000D8-000001B8       .text CreateHeap__10daSwProp_cFv */
-void daSwProp_c::CreateHeap() {
-    /* Nonmatching */
+BOOL daSwProp_c::CreateHeap() {
+    J3DModelData* modelData = (J3DModelData*)dComIfG_getObjectRes(m_arcname[mType], m_bdlidx[mType]);
+    JUT_ASSERT(DEMO_SELECT(0xFF, 0x101), modelData != 0);
+
+    mpModel = mDoExt_J3DModel__create(modelData, 0x80000, 0x11000022);
+    if (mpModel == NULL) {
+        return FALSE;
+    }
+
+    mpModel->setUserArea((u32)this);
+    return TRUE;
 }
+
+static BOOL nodeCallBack(J3DNode*, int);
 
 /* 000001B8-00000350       .text CreateInit__10daSwProp_cFv */
 void daSwProp_c::CreateInit() {
-    /* Nonmatching */
+    fopAcM_SetMtx(this, mpModel->getBaseTRMtx());
+    fopAcM_setCullSizeBox(this, -150.0f, -100.0f, -150.0f, 150.0f, 150.0f, 150.0f);
+    fopAcM_setCullSizeFar(this, 1.0f);
+
+    mAcchCir.SetWall(30.0f, 30.0f);
+    mAcch.Set(
+        DEMO_SELECT(fopAcM_GetPosition_p(this), &current.pos),
+        DEMO_SELECT(fopAcM_GetOldPosition_p(this), &old.pos),
+        this,
+        1,
+        &mAcchCir,
+        DEMO_SELECT(fopAcM_GetSpeed_p(this), &speed),
+        NULL,
+        NULL
+    );
+    mAcch.SetWallNone();
+    mAcch.SetWaterNone();
+    mAcch.SetRoofNone();
+
+    mStts.Init(0xFF, 0xFF, this);
+    mCyl.Set(l_cyl_src);
+    mCyl.SetStts(&mStts);
+
+    mSwitchNo = fopAcM_GetParam(this) & 0xFF;
+    set_mtx();
+
+    JUTNameTab* joint_name = mpModel->getModelData()->getJointName();
+    for (u16 i = 0; i < mpModel->getModelData()->getJointNum(); i++) {
+        if (strcmp("kaiten", joint_name->getName(i)) == 0) {
+            mpModel->getModelData()->getJointNodePointer(i)->setCallBack(nodeCallBack);
+            break;
+        }
+    }
+
+    mpModel->calc();
 }
 
 /* 00000350-00000404       .text nodeCallBack__FP7J3DNodei */
-static BOOL nodeCallBack(J3DNode*, int) {
-    /* Nonmatching */
+static BOOL nodeCallBack(J3DNode* i_node, int i_calcTiming) {
+    if (i_calcTiming == J3DNodeCBCalcTiming_In) {
+        J3DJoint* joint = (J3DJoint*)i_node;
+        u32 jnt_no = joint->getJntNo();
+        J3DModel* model = j3dSys.getModel();
+        daSwProp_c* i_this = (daSwProp_c*)model->getUserArea();
+        if (i_this != NULL) {
+            i_this->mRotY += i_this->mRotYVel;
+            mDoMtx_stack_c::copy(model->getAnmMtx(jnt_no));
+            mDoMtx_stack_c::YrotM(i_this->mRotY);
+            model->setAnmMtx(jnt_no, mDoMtx_stack_c::get());
+            mDoMtx_copy(mDoMtx_stack_c::get(), j3dSys.mCurrentMtx);
+        }
+    }
+    return TRUE;
 }
 
 /* 00000404-00000590       .text _create__10daSwProp_cFv */
 cPhs_State daSwProp_c::_create() {
-    /* Nonmatching */
+    fopAcM_ct(this, daSwProp_c);
+
+    mType = (fopAcM_GetParam(this) >> 8) & 0xF;
+    cPhs_State ret = dComIfG_resLoad(&mPhase, m_arcname[mType]);
+    if (ret == cPhs_COMPLEATE_e) {
+        if (!fopAcM_entrySolidHeap(this, CheckCreateHeap, m_heapsize[mType])) {
+            return cPhs_ERROR_e;
+        }
+        CreateInit();
+    }
+
+    return ret;
 }
 
 /* 000007B8-00000838       .text set_mtx__10daSwProp_cFv */
 void daSwProp_c::set_mtx() {
-    /* Nonmatching */
+    mpModel->setBaseScale(scale);
+    mDoMtx_stack_c::transS(current.pos);
+    mDoMtx_stack_c::YrotM(current.angle.y);
+    mpModel->setBaseTRMtx(mDoMtx_stack_c::get());
 }
 
 /* 00000838-00000B60       .text _execute__10daSwProp_cFv */
 bool daSwProp_c::_execute() {
-    /* Nonmatching */
+#if VERSION == VERSION_DEMO
+    s16 max_rot_y_vel = 0x1000;
+#endif
+    bool wind_hit = false;
+
+    mAcch.CrrPos(*dComIfG_Bgsp());
+    if (mCyl.ChkTgHit()) {
+        cCcD_Obj* hit_obj = mCyl.GetTgHitObj();
+        if (hit_obj != NULL) {
+            if (hit_obj->ChkAtType(AT_TYPE_WIND)) {
+                wind_hit = true;
+                mWasHit = false;
+                fopAcM_seStart(this, JA_SE_OBJ_PROP_SW_ON, 0);
+            } else if (hit_obj->ChkAtType(~(AT_TYPE_WATER | AT_TYPE_UNK20000 | AT_TYPE_WIND | AT_TYPE_UNK400000 | AT_TYPE_LIGHT))) {
+                mRotYVel = 0x300;
+                mRotYTarget = mRotYVel * -0.45f;
+                mWasHit = true;
+
+                if (hit_obj->ChkAtType(AT_TYPE_SWORD) || hit_obj->ChkAtType(AT_TYPE_SKULL_HAMMER) || hit_obj->ChkAtType(AT_TYPE_MOBLIN_SPEAR) ||
+                    hit_obj->ChkAtType(AT_TYPE_MACHETE))
+                {
+                    if (mType == 1) {
+#if VERSION == VERSION_DEMO
+                        u8 room_no = *(volatile u8*)&current.roomNo;
+                        daObj::HitSeStart(&current.pos, (s8)room_no, &mCyl, 0x0B);
+#else
+                        daObj::HitSeStart(&current.pos, current.roomNo, &mCyl, 0x0B);
+#endif
+                    } else if (mType == 0) {
+#if VERSION == VERSION_DEMO
+                        u8 room_no = *(volatile u8*)&current.roomNo;
+                        daObj::HitSeStart(&current.pos, (s8)room_no, &mCyl, 0x11);
+#else
+                        daObj::HitSeStart(&current.pos, current.roomNo, &mCyl, 0x11);
+#endif
+                    }
+                }
+            }
+        }
+    }
+
+    if (wind_hit) {
+        mRotYVel = DEMO_SELECT(max_rot_y_vel, 0x1000);
+        mRotYTarget = 0;
+    } else if (wind_hit != mWindHit) {
+#if VERSION == VERSION_DEMO
+        u32 switch_no = mSwitchNo;
+        u8 room_no = *(volatile u8*)&home.roomNo;
+        s8 signed_room_no = (s8)room_no;
+        dComIfGs_revSwitch(switch_no, signed_room_no);
+#else
+        dComIfGs_revSwitch(mSwitchNo, home.roomNo);
+#endif
+    }
+
+    s16 scale = 30;
+    if (mWasHit) {
+        scale = 10;
+    }
+    s16 result = cLib_addCalcAngleS(&mRotYVel, mRotYTarget, scale, 100, 10);
+    if (mWasHit && result == 0) {
+        mRotYTarget = mRotYTarget * -0.6f;
+        if (abs(mRotYTarget) < 0x20) {
+            mRotYTarget = 0;
+            mWasHit = false;
+        }
+    }
+
+    if (mType == 1) {
+        u32 sound_param = 100.0f * ((f32)mRotYVel / DEMO_SELECT((f32)max_rot_y_vel, 4096.0f));
+        mDoAud_seStart(JA_SE_OBJ_KM_WINDMILL, &current.pos, sound_param);
+    }
+
+    mWindHit = wind_hit;
+    set_mtx();
+
+    cXyz cyl_center = current.pos;
+    cyl_center.y += 50.0f;
+    mCyl.SetC(cyl_center);
+    dComIfG_Ccsp()->Set(&mCyl);
+    return true;
 }
 
 /* 00000B60-00000C00       .text _draw__10daSwProp_cFv */
 bool daSwProp_c::_draw() {
-    /* Nonmatching */
+    g_env_light.settingTevStruct(TEV_TYPE_ACTOR, &current.pos, &tevStr);
+    g_env_light.setLightTevColorType(mpModel, &tevStr);
+    mDoExt_modelUpdateDL(mpModel);
+
+    f32 ground_h = mAcch.GetGroundH();
+    if (ground_h != -G_CM3D_F_INF) {
+        dComIfGd_setSimpleShadow2(&current.pos, ground_h, 65.0f, mAcch.m_gnd);
+    }
+    return true;
 }
 
 /* 00000C00-00000C20       .text daSwProp_Create__FPv */
